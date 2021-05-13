@@ -1,3 +1,5 @@
+Check out solution2.txt if you just want the answer.
+
 Check out Todd's solution.
 https://todd.ginsberg.com/post/advent-of-code/2018/day11/
 https://github.com/tginsberg/advent-2018-kotlin/blob/master/src/main/kotlin/com/ginsberg/advent2018/Day11.kt
