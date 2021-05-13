@@ -1,0 +1,82 @@
+Your puzzle input is still 7689.
+
+
+
+with gridinput as (select 42 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+                    from rows100 x, rows100 y, gridinput g)
+select p.xnum, p.ynum, p.pl
+  , sum(p.pl) over (partition by p.xnum order by p.ynum rows between current row and z.num following) as sumtoz
+  , z.num znum
+from powerlevel p, rows100 z
+
+
+select 
+  xnum
+  , ynum
+  , sum(sumplx3) over (partition by ynum order by xnum rows between current row and 2 following) as sumpl
+from (
+with gridinput as (select 42 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+                    from rows100 x, rows100 y, gridinput g)
+select p.xnum, p.ynum, p.pl
+  , sum(p.pl) over (partition by p.xnum order by p.ynum rows between current row and 2 following) as sumplx3
+from powerlevel p, rows100 z
+)
+order by sumpl desc fetch first 1 rows only
+/
+
+
+
+
+
+
+
+
+------------ correct!!! ------------------
+select  
+  xnum
+  , ynum
+  , znum
+  , sum(sumpl) over (partition by ynum,znum order by xnum rows between current row and znum-1 following) as sumall
+from (
+select * from (
+with gridinput as (select 7689 grid_sn, 300 gridsize from dual)
+    ,rowgen as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, z.num znum, mod(trunc(((x.num+10)*y.num+g.grid_sn)*(x.num+10)/100),10)-5 pl
+                    from rowgen x, rowgen y, rowgen z, gridinput g)
+select p.xnum, p.ynum, p.znum, p.pl
+  , sum(p.pl) over (partition by p.xnum,p.znum order by p.ynum rows between current row and p.znum-1 following) as sumpl
+from powerlevel p
+)
+where 1=1
+--and xnum+znum <= 300 and ynum+znum < 300
+--and znum=3
+)
+order by sumall desc fetch first 1 rows only
+/
+--90	169	15	103
+------------ correct!!! ------------------
+
+-- tiny rewrite: powerlevel now just gives the board with powerlevels
+-- a join of powerlevel to z adds the z length
+select  
+  xnum
+  , ynum
+  , znum
+  , sum(sumploverx) over (partition by ynum,znum order by xnum rows between current row and znum-1 following) as sumall
+from (
+select * from (
+with gridinput as (select 7689 grid_sn, 300 gridsize from dual)
+    ,rowgen as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid_sn)*(x.num+10)/100),10)-5 pl
+                    from rowgen x, rowgen y, gridinput g)
+select p.xnum, p.ynum, p.pl, z.num znum
+  , sum(p.pl) over (partition by p.xnum,z.num order by p.ynum rows between current row and z.num-1 following) as sumploverx
+from powerlevel p, rowgen z
+)
+)
+order by sumall desc fetch first 1 rows only
+/
