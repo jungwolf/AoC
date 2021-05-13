@@ -1,0 +1,61 @@
+fuelcells(x,y), range of 1-300, 1-300
+cell.rackid = x+10
+cell.pl = rackid*y, pl = pl + input (7689), pl = pl * rackid, pl = trunc(pl/100), pl = mod(pl,10), pl = pl - 5.
+pl=mod(trunc(((x+10)*y+7689)*(x+10)/100),10)-5
+
+-- example for grid serial number 8 cell 3,5
+with gridinput as (select 8 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+select x.num, y.num, g.grid, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+,x.num+10 p1
+,(x.num+10)*y.num p2
+,(x.num+10)*y.num+g.grid p3
+,((x.num+10)*y.num+g.grid)*(x.num+10) p4
+,trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100) p5
+,mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10) p6
+,mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 p7
+from rows100 x, rows100 y, gridinput g
+where x.num=3 and y.num=5
+/
+
+with gridinput as (select 57 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+                    from rows100 x, rows100 y, gridinput g)
+select p.xnum, p.ynum, p.pl, sum(p.pl) over (partition by p.xnum) as sumpl
+from powerlevel p
+/
+
+with gridinput as (select 57 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+                    from rows100 x, rows100 y, gridinput g)
+select p.xnum, p.ynum, p.pl, sum(p.pl) over (partition by p.xnum order by p.ynum rows between current row and 2 following) as sumplx3
+from powerlevel p
+/
+-- so now we have x, y, sum((x,y),(x,y+1),(x,y+2) z
+for each x,y, want this and next two z
+
+------------ correct!!! ------------------
+select 
+  xnum
+  , ynum
+  , sum(sumplx3) over (partition by ynum order by xnum rows between current row and 2 following) as sumpl
+from (
+with gridinput as (select 42 grid from dual)
+    ,rows100 as (select level num from dual connect by 1=1 and level <= 300)
+    ,powerlevel as (select x.num xnum, y.num ynum, mod(trunc(((x.num+10)*y.num+g.grid)*(x.num+10)/100),10)-5 pl
+                    from rows100 x, rows100 y, gridinput g)
+--select p.xnum, p.ynum, p.pl
+--select p.xnum, p.ynum, p.pl, sum(p.pl) over () as sumpl
+--select p.xnum, p.ynum, p.pl, sum(p.pl) over (partition by p.xnum) as sumpl
+select p.xnum, p.ynum, p.pl
+  , sum(p.pl) over (partition by p.xnum order by p.ynum rows between current row and 2 following) as sumplx3
+from powerlevel p
+)
+order by sumpl desc fetch first 1 rows only
+/
+--21	61	30
+-- now with 7689
+--20	37	31
+------------ correct!!! ------------------
