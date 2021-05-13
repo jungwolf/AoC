@@ -15,6 +15,7 @@ from (
   )
 order by sumall desc fetch first 1 rows only
 /
+
 --90	169	15	103
 /*
   square: (90,169)
