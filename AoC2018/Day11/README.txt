@@ -6,3 +6,4 @@ https://github.com/tginsberg/advent-2018-kotlin/blob/master/src/main/kotlin/com/
 
 
 Then go to https://leetcode.com/explore/challenge/card/may-leetcoding-challenge-2021/
+Nevermind. They only have a few database challenges. The hardest part I found was getting a handle on their output specification instead of the problems themselves.
