@@ -1,0 +1,58 @@
+/*
+Problem: A file has rows of characters and blank lines. 
+  For each group of rows between blanks lines, cacatenate them and print on one line.
+  Discare the blank lines.
+
+Assume this:
+select * from foldlines;
+a,b -- input order, value
+---
+1,abc
+2,
+3,a
+4,b
+5,c
+6,
+7,ab
+8,ac
+9,
+10,a
+11,a
+12,a
+13,a
+14,
+15,b
+*/
+
+with g as (
+  select a,b
+    , sum(nvl2(b,0,1)) over (order by a) grouping
+  from foldlines
+)
+select min(a), max(a)
+  ,listagg(b,' ') within group (order by a) 
+from g
+where b is not null 
+group by grouping;
+
+
+/*
+but why?
+using an analytical function to get a running total of null lines, which is used to identify consecutive groups
+sum(nvl2(b,0,1)) over (order by a)
+  sum(expression) --> gives a running total of (expression)
+      expression  --> what are we adding? sum(1) is 1+1+1...
+      nvl2(b,0,1) --> this expression is little cryptic
+                  --> if b is not null then return 0, if it is null return 1
+                  --> this lets us count the number of null lines
+  over (order by a) --> running total means summing up values in an order
+                    --> order by a gives that ordr
+                    --> remember a is the linenumber of the input
+       ... -> over() has other optional parameters too, not used in this case
+         --> not explaining here but don't want to con
+-- analytical functions are one of the last operations performed on a result set
+-- use the where clause to analyze the results
+-- use the results as an inline view to modified the output
+  -- for example, here I need the blank lines to count correct
+  -- i will use a where clause in the new view to remove the blank lines
+*/
